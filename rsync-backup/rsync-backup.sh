@@ -1,21 +1,18 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-############################
-# Global variables
-
-INVOCATION="$0"
-ARG="${1:-NO_SOURCE_PATH}"
-DEST_PATH="${2:-NO_DEST_PATH}"
-BACKUP_COUNT="${3:-}"
-DATETIME=$(date +%F-%H%M%S)
-PROGRAM="$(basename $INVOCATION)"
+set -o err_exit
+set -o pipefail
+set -o nounset
 
 ############################
 # Functions
 
 usage() {
-    echo "Usage: $INVOCATION: <src> <dest> [-f|--force-new] [-b|--backup-count]" >&2
-    echo "       $INVOCATION: -h|--help" >&2
+    declare invocation="$1"
+    echo "Usage: $invocation
+: <src> <dest> [-f|--force-new] [-b|--backup-count]" >&2
+    echo "       $invocation
+: -h|--help" >&2
     echo "" >&2
     echo "Used to create backups using hard links from previous backups to optimize" >&2
     echo "storage needs." >&2
@@ -27,42 +24,67 @@ usage() {
 }
 
 err_exit() {
-    MSG="$1"
-    echo "$PROGRAM: $MSG" >&2
+    declare msg="$1"
+    declare invocation="$2"
+    echo "${invocation}: ${msg}" >&2
     echo "" >&2
-    usage
+    usage ${invocation}
     exit 1
 }
 
 validate_dir() {
-    DIR="$1"
-    [[ -d $DIR ]]
+    declare dir="$1"
+    [[ -d $dir ]]
+}
+
+get_absolute_path() {
+    declare dir="$1"
+    echo $(
+        cd "${dir}"
+        pwd -P
+    )
 }
 
 ############################
 # Program
 
-case "$ARG" in
---help | -h)
-    usage
-    exit 0
-    ;;
-*) SOURCE_PATH="$ARG" ;;
-esac
+main() {
+    invocation="$0"
+    program="$(basename $invocation)"
+    #datetime=$(date +%F-%H%M%S)
 
-if [ $# -lt 2 ]; then
-    err_exit "Illegal number of arguments"
-fi
+    arguments="${1:-NO_SOURCE_PATH}"
+    destination_path="${2:-NO_DEST_PATH}"
+    backupt_count="${3:-}"
 
-echo "Executing using..."
-echo "Source path: $SOURCE_PATH"
-echo "Destination path: $DEST_PATH"
-echo ""
+    case "${arguments}" in
+    --help | -h)
+        usage ${invocation}
+        exit 0
+        ;;
+    *) source_path="${arguments}" ;;
+    esac
 
-if validate_dir "$SOURCE_PATH"; then
-    echo "found source dir"
-fi
+    if [ $# -lt 2 ]; then
+        err_exit "Illegal number of argumentsuments" "${invocation}"
+    fi
 
-if validate_dir "$DEST_PATH"; then
-    echo "found dest dir"
-fi
+    echo "Executing using..."
+    echo "Source path: ${source_path}"
+    echo "Destination path: ${destination_path}"
+    echo ""
+
+    if validate_dir "$source_path"; then
+        echo "found source dir"
+        source_path=$(get_absolute_path "$source_path")
+        echo "$source_path"
+    fi
+
+    if validate_dir "$destination_path"; then
+        echo "found dest dir"
+    fi
+
+    return 0
+}
+
+main "$@"
