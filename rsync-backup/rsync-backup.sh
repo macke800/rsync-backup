@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -o err_exit
+set -o errexit
 set -o pipefail
 set -o nounset
 
@@ -9,10 +9,8 @@ set -o nounset
 
 usage() {
     declare invocation="$1"
-    echo "Usage: $invocation
-: <src> <dest> [-f|--force-new] [-b|--backup-count]" >&2
-    echo "       $invocation
-: -h|--help" >&2
+    echo "Usage: $invocation    : <src> <dest> [-f|--force-new] [-b|--backup-count]" >&2
+    echo "       $invocation    : -h|--help" >&2
     echo "" >&2
     echo "Used to create backups using hard links from previous backups to optimize" >&2
     echo "storage needs." >&2
@@ -34,7 +32,7 @@ err_exit() {
 
 validate_dir() {
     declare dir="$1"
-    [[ -d $dir ]]
+    [[ -d "${dir}" ]]
 }
 
 get_absolute_path() {
@@ -45,44 +43,93 @@ get_absolute_path() {
     )
 }
 
+get_system_temp_dir() {
+    echo $(dirname $(mktemp -u))
+}
+
+md5_from_paths() {
+    declare source_path="$1"
+    declare destination_path="$2"
+
+    echo $(echo "src: ${source_path} dst: ${destination_path}" | md5sum | sed -E 's/(^[a-f|0-9])*.$/\1/')
+}
+
+get_timestamp() {
+    echo $(date +%F-%H%M%S)
+}
+
+get_session_filename() {
+    declare source_path="$1"
+    declare destination_path="$2"
+    echo "$(get_system_temp_dir)/rsync-$(md5_from_paths ${source_path} ${destination_path})"
+}
+
+create_session() {
+    declare source_path="$1"
+    declare destination_path="$2"
+    declare session_file="$(get_session_filename ${source_path} ${destination_path})"
+    echo "session_started=$(get_timestamp)" >"${session_file}"
+}
+
+is_session_active() {
+    declare source_path="$1"
+    declare destination_path="$2"
+    declare session_file="$(get_session_filename ${source_path} ${destination_path})"
+    [[ -f "${session_file}" ]]
+}
+
+delete_session() {
+    declare source_path="$1"
+    declare destination_path="$2"
+    declare session_file="$(get_session_filename ${source_path} ${destination_path})"
+    rm ${session_file}
+}
+
 ############################
 # Program
 
 main() {
-    invocation="$0"
-    program="$(basename $invocation)"
-    #datetime=$(date +%F-%H%M%S)
+    declare invocation="$0"
+    declare program="$(basename $invocation)"
 
-    arguments="${1:-NO_SOURCE_PATH}"
-    destination_path="${2:-NO_DEST_PATH}"
-    backupt_count="${3:-}"
+    declare arguments="${1:-NO_SOURCE_PATH}"
+    declare destination_path="${2:-NO_DEST_PATH}"
+    declare backup_count="${3:-}"
 
     case "${arguments}" in
     --help | -h)
         usage ${invocation}
         exit 0
         ;;
-    *) source_path="${arguments}" ;;
+    *) declare source_path="${arguments}" ;;
     esac
 
     if [ $# -lt 2 ]; then
-        err_exit "Illegal number of argumentsuments" "${invocation}"
+        err_exit "Illegal number of arguments" "${invocation}"
     fi
 
-    echo "Executing using..."
+    if validate_dir "${source_path}"; then
+        source_path=$(get_absolute_path "$source_path")
+    else
+        err_exit "Source path not found!" "${invocation}"
+    fi
+
     echo "Source path: ${source_path}"
     echo "Destination path: ${destination_path}"
     echo ""
 
-    if validate_dir "$source_path"; then
-        echo "found source dir"
-        source_path=$(get_absolute_path "$source_path")
-        echo "$source_path"
+    #echo $(create_session ${source_path} ${destination_path})
+    if is_session_active "${source_path}" "${destination_path}"; then
+        echo "Continuing session..."
+    else
+        echo "Starting new session..."
+        create_session "${source_path}" "${destination_path}"
     fi
 
-    if validate_dir "$destination_path"; then
-        echo "found dest dir"
-    fi
+    # If session file exists use its data
+    # If session file does not exist, extract latest backup to use as --link-desc folder
+
+    # Remove backup if --backup-count is exeeded
 
     return 0
 }
