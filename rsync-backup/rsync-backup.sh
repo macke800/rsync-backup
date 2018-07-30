@@ -51,8 +51,12 @@ get_system_temp_dir() {
 md5_from_paths() {
     declare source_path="$1"
     declare destination_path="$2"
-
-    echo $(echo "src: ${source_path} dst: ${destination_path}" | md5sum | sed -E 's/(^[a-f|0-9])*.$/\1/')
+    if [[ $(uname) == "Darwin"* ]]; then
+        declare md5="md5"
+    else
+        declare md5="md5sum"
+    fi
+    echo $(echo "src: ${source_path} dst: ${destination_path}" | ${md5} | sed -E 's/(^[a-f|0-9])*.$/\1/')
 }
 
 get_timestamp() {
@@ -137,10 +141,10 @@ main() {
     echo "Destination path: ${destination_path}"
     echo ""
 
-    declare is_session_new=true
+    declare new_session=true
     if is_session_active "${source_path}" "${destination_path}"; then
         echo "Continuing session..."
-        is_session_new=false
+        new_session=false
     else
         echo "Starting new session..."
         create_session "${source_path}" "${destination_path}"
@@ -155,9 +159,23 @@ main() {
     fi
 
     # Check if we found a previous backup, this should be used as --link-dest argument to rsync
-    if [[ ${#backups[@]} -gt 0 && is_session_new ]]; then
-        rsync_args="${rsync_args} --link-dest=../${backups[0]}"
+    #if [[ ${#backups[@]} -gt 1 && ! new_session ]]; then
+    #    rsync_args="${rsync_args} --link-dest=../${backups[0]}"
+    #fi
+    echo "${new_session}"
+    if new_session; then
+        echo "Session is new"
+        if [[ ${#backups[@]} > 0 ]]; then
+            rsync_args="${rsync_args} --link-dest=../${backups[0]}"
+        fi
+    else
+        if [[ ${#backups[@]} > 1 ]]; then
+            rsync_args="${rsync_args} --link-dest=../${backups[0]}"
+        fi
     fi
+
+    # If session is new, check num backups > 0 => use link-dest
+    # else (Session is not new), check if num backups > 1 => use link-dest
 
     echo "${rsync_args}"
     # If session file exists use its data
@@ -166,7 +184,7 @@ main() {
     #echo "${#backups[@]}"
 
     # Remove backup if --backup-count is exeeded
-
+    # Break out host tools
     return 0
 }
 
