@@ -122,6 +122,7 @@ main() {
 
     declare source_path="$1"
     declare backup_root_path="$2"
+    echo "root: ${backup_root_path}"
 
     if validate_dir "${source_path}"; then
         source_path=$(get_absolute_path "$source_path")
@@ -163,7 +164,11 @@ main() {
             rsync_args="${rsync_args} --link-dest=../${backups[0]}"
         fi
         destination_path=${backup_root_path}/$(get_timestamp)
-        mkdir ${destination_path}
+        if [ -z ${hostname} ]; then
+            mkdir ${destination_path}
+        else
+            remote_execute "${hostname}" "mkdir ${destination_path}"
+        fi
     else
         if [[ ${#backups[@]} > 1 ]]; then
             rsync_args="${rsync_args} --link-dest=../${backups[1]}"
@@ -172,6 +177,9 @@ main() {
     fi
     #echo "--- sleep 5 ---"
     #sleep 5
+    if ! [ -z ${hostname} ]; then
+        destination_path="${hostname}:${destination_path}"
+    fi
 
     echo "Executing: rsync ${rsync_args} ${source_path} ${destination_path}"
     rsync ${rsync_args} "${source_path}" "${destination_path}"
