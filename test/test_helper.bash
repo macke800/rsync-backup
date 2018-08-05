@@ -1,0 +1,2 @@
+destination_path=$BATS_TEST_DIRNAME/destination
+test_data_path=$BATS_TEST_DIRNAME/test-data
