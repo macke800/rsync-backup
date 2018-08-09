@@ -1,5 +1,5 @@
-load ../../test/test_helper/bats-support/load
-load ../../bats-assert/load
+#!/usr/bin/env bats
+
 load ./test_helper
 
 function setup() {
