@@ -15,7 +15,7 @@ function teardown() {
     assert_success
 
     # Check that there is only one backup
-    assert_equal $(ls -1 $BATS_TEST_DIRNAME/destination/* | wc -l)  "1"
+    assert_equal $(ls -1 "$BATS_TEST_DIRNAME/destination" | wc -l)  "1"
 
     # Check that the existing backup is the exact source
     assert $(diff -rq $test_data_path $destination_path/*/test-data)
