@@ -44,3 +44,6 @@ function teardown() {
     size_two_backups=$(du -sh $destination_path | sed -E 's/([1-9]+)M.*/\1/')
     assert_equal $size_two_backups $size_one_backup
 }
+
+# TODO:
+# - Test with paths containing spaces

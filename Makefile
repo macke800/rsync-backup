@@ -13,7 +13,7 @@ test: $(DOCKER_CONFIG)
 	@$(DOCKER) rm $(DOCKER_INSTANCE)
 
 clean:
-	@if ! [ -z "$(shell $(DOCKER) ps -f name=$(DOCKER_INSTANCE) -q)" ]; then \
+	@if ! [ -z "$(shell $(DOCKER) ps -f name=$(DOCKER_INSTANCE) -q --all)" ]; then \
 		echo "--- Removing docker test instance"; \
 		$(DOCKER) -l "error" kill $(DOCKER_INSTANCE); \
 		$(DOCKER) -l "error" rm $(DOCKER_INSTANCE); \
