@@ -68,15 +68,19 @@ remote_execute() {
 main() {
     declare invocation="$0"
     declare hostname=""
+    declare max_backup_count=5
 
-    while getopts "hr:" opt; do
+    while getopts "hr:b:" opt; do
         case "${opt}" in
         h)
             usage "${invocation}"
             exit 0
             ;;
         r)
-            declare hostname="${OPTARG}"
+            hostname="${OPTARG}"
+            ;;
+        b)
+            max_backup_count="${OPTARG}"
             ;;
         *)
             exit 1
@@ -155,6 +159,20 @@ main() {
 
     echo "Executing: rsync ${rsync_args[*]} ${source_path} ${destination_path}"
     eval "rsync ${rsync_args[*]} ${source_path} ${destination_path}"
+
+    # Add one to include the current backup
+    declare remove_count=$((${#backups[@]} + 1 - max_backup_count))
+    if [ ${remove_count} -gt 0 ]; then
+        # Create a sequence of array indexes for the entries to remove and itterate over those
+        for i in $(seq $((${#backups[@]} - 1)) -1 $((${#backups[@]} - remove_count))); do
+            if [ -z "${hostname}" ]; then
+                echo "rm -rf "${backup_root_path:?}/${backups[${i}]:?}""
+                rm -rf "${backup_root_path:?}/${backups[${i}]:?}"
+            else
+                remote_execute "${hostname}" "rm -rf ${backup_root_path:?}/${backups[${i}]:?}"
+            fi
+        done
+    fi
 
     delete_session "${source_path}" "${backup_root_path}"
 

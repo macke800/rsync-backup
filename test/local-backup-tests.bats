@@ -45,5 +45,31 @@ function teardown() {
     assert_equal $size_two_backups $size_one_backup
 }
 
+@test "If -b2, check that cleanup is done accordingly and only the two latest backups remain" {
+    run $BATS_TEST_DIRNAME/../src/rsync-backup.sh -b 2 $test_data_path $destination_path
+    assert_success
+    declare -a after_first_backup
+    mapfile -t after_first_backup < <(eval "find ${destination_path}/* -maxdepth 0 -type d -exec basename {} \\; 2>/dev/null | sort")
+    assert_equal ${#after_first_backup[@]} 1
+    
+    sleep 1
+    run $BATS_TEST_DIRNAME/../src/rsync-backup.sh -b 2 $test_data_path $destination_path
+    assert_success
+    declare -a after_second_backup
+    mapfile -t after_second_backup < <(eval "find ${destination_path}/* -maxdepth 0 -type d -exec basename {} \\; 2>/dev/null | sort")
+    assert_equal ${#after_second_backup[@]} 2
+    assert_equal ${after_first_backup[0]} ${after_second_backup[0]}
+
+    sleep 1
+    run $BATS_TEST_DIRNAME/../src/rsync-backup.sh -b 2 $test_data_path $destination_path
+    assert_success
+    declare -a after_third_backup
+    mapfile -t after_third_backup < <(eval "find ${destination_path}/* -maxdepth 0 -type d -exec basename {} \\; 2>/dev/null | sort")
+    assert_equal ${#after_third_backup[@]} 2
+    [ "${after_third_backup[0]}" != "${after_first_backup[0]}" ]
+    [ "${after_second_backup[1]}" = "${after_third_backup[0]}" ]
+
+}
+
 # TODO:
 # - Test with paths containing spaces
