@@ -45,7 +45,7 @@ function teardown() {
     assert_equal $size_two_backups $size_one_backup
 }
 
-@test "If -b2, check that cleanup is done accordingly and only the two latest backups remain" {
+@test "Local backup if -b2, check that cleanup is done accordingly and only the two latest backups remain" {
     run ${BATS_TEST_DIRNAME}/../src/rsync-backup.sh -b 2 ${test_data_path} ${destination_path}
     assert_success
     declare -a after_first_backup

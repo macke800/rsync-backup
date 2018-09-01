@@ -7,7 +7,9 @@ BATS_BIN_PATH = ../bats-core/bin
 
 all: test
 
-test: $(DOCKER_CONFIG)
+test: clean run_tests
+
+run_tests: $(DOCKER_CONFIG)
 	@$(DOCKER) build -t $(DOCKER_IMAGE) .
 	@$(DOCKER) run -l "error" --name $(DOCKER_INSTANCE) $(DOCKER_IMAGE)
 	@$(DOCKER) rm $(DOCKER_INSTANCE)
@@ -20,4 +22,4 @@ clean:
 	fi
 
 
-.PHONY: all test clean
+.PHONY: all test clean run_tests
