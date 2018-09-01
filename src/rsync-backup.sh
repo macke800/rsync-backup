@@ -59,7 +59,7 @@ get_timestamp() {
 remote_execute() {
     declare hostname="$1"
     declare command="$2"
-    ssh -f "${hostname}" "${command}"
+    ssh "${hostname}" "${command}"
 }
 
 ############################
@@ -105,6 +105,13 @@ main() {
     if [ -z "${hostname}" ]; then
         if validate_dir "${backup_root_path}"; then
             backup_root_path=$(get_absolute_path "${backup_root_path}")
+        else
+            err_exit "Destination path not found!" "${invocation}"
+        fi
+    else
+        if remote_execute "${hostname}" "[ -d ${backup_root_path} ]"; then
+
+            backup_root_path="${backup_root_path}"
         else
             err_exit "Destination path not found!" "${invocation}"
         fi
