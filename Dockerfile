@@ -33,6 +33,6 @@ RUN chown -R testuser:testuser /app
 COPY --chown=testuser:testuser ./docker/testuser-ssh-config /home/testuser/.ssh/config
 COPY --chown=testuser:testuser . /app
 
-#CMD service ssh start && /bin/bash
-CMD service ssh start && su - testuser -c "/usr/local/bin/bats -r -t /app/test"
+#CMD service ssh start && /usr/sbin/sshd -p 2222 && /bin/bash
+CMD service ssh start && /usr/sbin/sshd -p 2222 && su - testuser -c "/usr/local/bin/bats -r -t /app/test"
 #CMD ["/usr/sbin/sshd", "-D"]

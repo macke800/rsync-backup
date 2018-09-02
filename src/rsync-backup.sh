@@ -24,6 +24,7 @@ usage() {
     echo "  dest:                Destination path" >&2
     echo "  -b|--backup-count:   Number of backups to store before start to remove oldest" >&2
     echo "  -r|--remote:         Destination directory on remote server, will use SSH" >&2
+    echo "  -p|--port:           Set non-standard SSH port if -r is used" >&2
 }
 
 err_exit() {
@@ -58,8 +59,9 @@ get_timestamp() {
 
 remote_execute() {
     declare hostname="$1"
-    declare command="$2"
-    ssh "${hostname}" "${command}"
+    declare port="$2"
+    declare command="$3"
+    ssh -p "${port}" "${hostname}" "${command}"
 }
 
 ############################
@@ -69,8 +71,9 @@ main() {
     declare invocation="$0"
     declare hostname=""
     declare max_backup_count=5
+    declare ssh_port=22
 
-    while getopts "hr:b:" opt; do
+    while getopts "hr:b:p:" opt; do
         case "${opt}" in
         h)
             usage "${invocation}"
@@ -81,6 +84,9 @@ main() {
             ;;
         b)
             max_backup_count="${OPTARG}"
+            ;;
+        p)
+            ssh_port=${OPTARG}
             ;;
         *)
             exit 1
@@ -109,8 +115,8 @@ main() {
             err_exit "Destination path not found!" "${invocation}"
         fi
     else
-        if remote_execute "${hostname}" "[ -d ${backup_root_path} ]"; then
-
+        if remote_execute "${hostname}" "${ssh_port}" "[ -d ${backup_root_path} ]"; then
+            # TODO: Add get_absolute_path for remote as well, right now only absolute path works for remote
             backup_root_path="${backup_root_path}"
         else
             err_exit "Destination path not found!" "${invocation}"
@@ -134,7 +140,7 @@ main() {
     if [ -z "${hostname}" ]; then
         mapfile -t backups < <(eval "find ${backup_root_path}/* -maxdepth 0 -type d -exec basename {} \\; 2>/dev/null | sort -r")
     else
-        mapfile -t backups < <(remote_execute "${hostname}" "cd ${backup_root_path} && eval \"find ${backup_root_path}/* -maxdepth 0 -type d -exec basename {} \\; 2>/dev/null | sort -r\"")
+        mapfile -t backups < <(remote_execute "${hostname}" "${ssh_port}" "cd ${backup_root_path} && eval \"find ${backup_root_path}/* -maxdepth 0 -type d -exec basename {} \\; 2>/dev/null | sort -r\"")
         rsync_args="${rsync_args} -e ssh"
     fi
 
@@ -147,7 +153,7 @@ main() {
         if [ -z "${hostname}" ]; then
             mkdir "${destination_path}"
         else
-            remote_execute "${hostname}" "mkdir ${destination_path}"
+            remote_execute "${hostname}" "${ssh_port}" "mkdir ${destination_path}"
         fi
     else
         if [[ ${#backups[@]} -gt 1 ]]; then
@@ -176,7 +182,7 @@ main() {
                 echo "rm -rf "${backup_root_path:?}/${backups[${i}]:?}""
                 rm -rf "${backup_root_path:?}/${backups[${i}]:?}"
             else
-                remote_execute "${hostname}" "rm -rf ${backup_root_path:?}/${backups[${i}]:?}"
+                remote_execute "${hostname}" "${ssh_port}" "rm -rf ${backup_root_path:?}/${backups[${i}]:?}"
             fi
         done
     fi
