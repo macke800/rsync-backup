@@ -14,17 +14,17 @@ MY_SCRIPT_PATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 usage() {
     declare invocation="$1"
-    echo "Usage: $invocation    : [-b|--backup-count] [-r|--remote] <src> <dest>" >&2
+    echo "Usage: $invocation    : [-b NUM] [-r USER@SERVER] [-p PORT] <src> <dest>" >&2
     echo "       $invocation    : -h|--help" >&2
     echo "" >&2
     echo "Used to create backups using hard links from previous backups to optimize" >&2
     echo "storage needs." >&2
     echo "" >&2
-    echo "  src:                 Source path" >&2
-    echo "  dest:                Destination path" >&2
-    echo "  -b|--backup-count:   Number of backups to store before start to remove oldest" >&2
-    echo "  -r|--remote:         Destination directory on remote server, will use SSH" >&2
-    echo "  -p|--port:           Set non-standard SSH port if -r is used" >&2
+    echo "  src:    Source path" >&2
+    echo "  dest:   Destination path" >&2
+    echo "  -b:     Number of backups to store before start to remove oldest" >&2
+    echo "  -r:     Destination directory on remote server, will use SSH" >&2
+    echo "  -p:     Set non-standard SSH port if -r is used" >&2
 }
 
 err_exit() {
@@ -141,7 +141,7 @@ main() {
         mapfile -t backups < <(eval "find ${backup_root_path}/* -maxdepth 0 -type d -exec basename {} \\; 2>/dev/null | sort -r")
     else
         mapfile -t backups < <(remote_execute "${hostname}" "${ssh_port}" "cd ${backup_root_path} && eval \"find ${backup_root_path}/* -maxdepth 0 -type d -exec basename {} \\; 2>/dev/null | sort -r\"")
-        rsync_args="${rsync_args} -e ssh"
+        rsync_args="${rsync_args} -e 'ssh -p ${ssh_port}'"
     fi
 
     # Check if we found a previous backup, this should be used as --link-dest argument to rsync
