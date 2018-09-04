@@ -6,6 +6,10 @@ set -o nounset
 
 MY_SCRIPT_PATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
+# If installed by debian package the invocation is a symlink, use scripts from /usr/lib/rsync-backup
+if [ ! -f "${MY_SCRIPT_PATH}/session.sh" ]; then
+    MY_SCRIPT_PATH="/usr/lib/rsync-backup"
+fi
 # shellcheck source=./session.sh
 . "${MY_SCRIPT_PATH}/session.sh"
 

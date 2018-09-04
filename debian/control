@@ -1,0 +1,14 @@
+Source: rsync-backup
+Maintainer: Markus Malmgren <markus@webmalmgren.se>
+Section: utils
+Priority: optional
+Standards-Version: 4.1.2
+Build-Depends: debhelper (>= 9)
+
+
+Package: rsync-backup
+Architecture: all
+Depends: ${misc:Depends}, rsync
+Description: rsync extension to make multi-snapshot backup easier
+ This package adds the tool rsync-backup to simplify creating incremental
+ local and remote snapshots of a source folder.

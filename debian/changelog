@@ -1,0 +1,5 @@
+rsync-backup (0.1-1) unstable; urgency=medium
+
+  * Initial release
+
+ -- Markus Malmgren <markus@webmalmgren.se>  Sun, 23 Sep 2018 23:07:54 +0200
