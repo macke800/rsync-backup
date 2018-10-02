@@ -40,6 +40,15 @@ Remote backup with 5 snapshots and alternative SSH port 2222:
 rsync-backup -b5 -r user@server.com -p2222 ./src /home/user/target
 ```
 
+## How to build debian package
+
+Build the debian package:
+```
+make clean
+make package
+```
+Package will be in `build`-folder.
+
 ## Known limitations (things to fix)
 
 - Destination path for remote backup need to be absolute

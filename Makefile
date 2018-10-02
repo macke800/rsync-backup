@@ -3,13 +3,14 @@ DOCKER_CONFIG = ./Dockerfile
 DOCKER_IMAGE = rsync-backup-testenv
 DOCKER_INSTANCE = rsync-backup-testenv-instance
 
+BATS_BIN_PATH = ../bats-core/bin
+
 BUILD_FOLDER = build
 VERSION_FULL = $(shell dpkg-parsechangelog --show-field Version)
 VERSION = $(subst -1,"",$(VERSION_FULL))
 PKG_NAME = rsync-backup
-PKG_BUILD_FOLDER = $(BUILD_FOLDER)/package2/$(PKG_NAME)-$(VERSION)
+PKG_BUILD_FOLDER = $(BUILD_FOLDER)/package/$(PKG_NAME)-$(VERSION)
 PKG_ORIG_TAR = $(PKG_NAME)_$(VERSION).orig.tar.xz
-BATS_BIN_PATH = ../bats-core/bin
 SRC_FILES = $(wildcard src/*)
 DST_FILES = $(patsubst src/%,$(PKG_BUILD_FOLDER)/%,$(SRC_FILES))
 
