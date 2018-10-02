@@ -11,6 +11,9 @@ The goals of rsync-backup are
 ## Table of Contents
 
 - [How to use](#how-to-use)
+- [Examples](#examples)
+- [How to build debian package](#how-to-build-debian-package)
+- [Known limitations](#known-limitations-things-to-fix)
 
 ## How to use
 
