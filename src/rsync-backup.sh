@@ -183,7 +183,7 @@ main() {
         # Create a sequence of array indexes for the entries to remove and itterate over those
         for i in $(seq $((${#backups[@]} - 1)) -1 $((${#backups[@]} - remove_count))); do
             if [ -z "${hostname}" ]; then
-                echo "rm -rf "${backup_root_path:?}/${backups[${i}]:?}""
+                echo "rm -rf \"${backup_root_path:?}/${backups[${i}]:?}\""
                 rm -rf "${backup_root_path:?}/${backups[${i}]:?}"
             else
                 remote_execute "${hostname}" "${ssh_port}" "rm -rf ${backup_root_path:?}/${backups[${i}]:?}"

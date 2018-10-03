@@ -16,7 +16,10 @@ DST_FILES = $(patsubst src/%,$(PKG_BUILD_FOLDER)/%,$(SRC_FILES))
 
 all: test
 
-test: clean run_tests
+test: shellcheck clean run_tests
+
+shellcheck:
+	@(cd src && shellcheck -x *.sh)
 
 run_tests: $(DOCKER_CONFIG)
 	@$(DOCKER) build -t $(DOCKER_IMAGE) .
@@ -43,9 +46,8 @@ $(PKG_BUILD_FOLDER)/debian: $(PKG_BUILD_FOLDER)
 $(PKG_ORIG_TAR): $(DST_FILES)
 	@(cd $(PKG_BUILD_FOLDER) && tar cJvf ../$(PKG_ORIG_TAR) $(patsubst $(PKG_BUILD_FOLDER)/%,./%,$(DST_FILES)))
 
-package: $(DST_FILES) $(PKG_BUILD_FOLDER)/debian $(PKG_ORIG_TAR)
-	@echo Version: $(VERSION)
+package: test $(DST_FILES) $(PKG_BUILD_FOLDER)/debian $(PKG_ORIG_TAR)
 	@(cd $(PKG_BUILD_FOLDER) && debuild -us -uc)
 	@cp $(PKG_BUILD_FOLDER)/../$(PKG_NAME)_$(VERSION_FULL)_all.deb $(BUILD_FOLDER)
 
-.PHONY: all test clean run_tests
+.PHONY: all shellcheck test clean run_tests 
